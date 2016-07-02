@@ -6,6 +6,7 @@ import urllib2
 import contextlib
 import StringIO
 import csv
+import re
 
 def main():
     csvURL = parseArgs()
@@ -64,14 +65,20 @@ def validateAndReadCsvUrl(url):
             segmentDetails[columnHeaders[i]] = row[i]
 
         # Add the latitude and longitude to the segment details
-        (lon, lat) = parseLonLat(segmentDetails['PL'])
+        (lon, lat) = getLonLatFromPermalink(segmentDetails['PL'])
+
+        print "PL: {0}\n\tLon = {1:f.5}, Lat = {2:f.5}".format(
+            segmentDetails['PL'], lon, lat)
 
         # Add to list of segments with segment ID as key
         segmentList[int(row[0])] = segmentDetails
 
     return segmentList
 
-def getLonLatFromPl(segmentPermalink):
+def getLonLatFromPermalink(segmentPermalink):
+    matches = re.search("&lon=([\d\.]+).*&lat=([\d\.]+)", segmentPermalink)
+
+    return matches.groups()
 
 
 def generateKml(segmentList):
