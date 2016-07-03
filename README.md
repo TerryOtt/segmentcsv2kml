@@ -4,8 +4,8 @@ This script converts comma-separated value (CSV) files of a specific type into K
 
 # Installation instructions
 
-The only two __supported__ build environments for segmentcsv2kml are Ubuntu Linux or via a 
-Docker contain.  
+The only two __supported__ environments to run segmentcsv2kml are Ubuntu Linux or using a Docker
+container built with instructions on this site.  
 
 Instructions *may* be provided for other Linux distributions or operating systems, but they are not
 supported and very lightly tested, if at all.
