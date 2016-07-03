@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2006 Terry D. Ott. 
+# Copyright (c) 2016 Terry D. Ott. 
 #
 #   You may use, distribute, and modify this code under the terms
 #   of the MIT License.
