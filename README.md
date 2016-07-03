@@ -66,8 +66,8 @@ Create a directory for the output files (e.g., <code>mkdir ~/tmp/speed-kml</code
 1. Click *Add layer* button
 1. Click the blue *Import* link under the new "Untitled Layer"
 1. Select second KML file (file will start with "02")
-1. Repeat adding-then-disabling layers until all KML files are uploaded
-1. Re-enable the layers starting at the bottom layer and working your way up
+1. Repeat steps 7-9 until all KML files are uploaded (in order by filename)
+1. Re-enable all layers starting at the bottom layer and working your way up
 
 
 # Licensing
