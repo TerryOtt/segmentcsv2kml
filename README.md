@@ -32,7 +32,14 @@ on how to get the Docker environment installed.
 Once Docker is installed, change to the <code>install/</code> directory, and run:
 
     docker build -t segmentcsv2kml -f Dockerfile .
-    docker run -it segmentcsv2kml .
+    docker run -it segmentcsv2kml 
+
+The build steps already downloaded and installed the program, so once you're at the 
+bash shell inside the running container, just run the script:
+
+    mkdir -p ~/tmp/kmloutput
+    python segmentcsv2kml [url] ~/tmp/kmloutput
+    ls -laF ~/tmp/kmloutput
 
 ## CentOS
 
