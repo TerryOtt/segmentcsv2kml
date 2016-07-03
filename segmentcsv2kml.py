@@ -9,9 +9,10 @@ import csv
 import re
 import kmldom
 import kmlengine
+import os.path
 
 def main():
-    (csvURL, kmlFile) = parseArgs()
+    (csvURL, kmlDirectory) = parseArgs()
 
     segmentList = validateAndReadCsvUrl(csvURL)
 
@@ -23,18 +24,23 @@ def main():
     print "Number of MH: {0}".format(len(segmentsByType['Major Highway']))
     print "Number of mH: {0}".format(len(segmentsByType['Minor Highway']))
 
-    generateKml(segmentsByType, kmlFile)
+    generateKml(segmentsByType, kmlDirectory)
 
 def parseArgs():
     parser = argparse.ArgumentParser(description="Convert CSV file with segment data to KML")
     parser.add_argument('csvURL', 
         help='URL to the CSV to download, e.g. "http://db.slickbox.net/states/Ohio-sl.csv"')
-    parser.add_argument('kmlFile',
-        help='KML file to generate with output')
+    parser.add_argument('kmlDirectory',
+        help='Directory to store generated KML file(s)')
 
     args = parser.parse_args()
 
-    return (args.csvURL, args.kmlFile)
+    # Make sure target directory exists
+    if os.path.isdir(args.kmlDirectory) is False:
+        print "\nERROR: Specified output directory {0} does not exist".format(args.kmlDirectory)
+        sys.exit()
+
+    return (args.csvURL, args.kmlDirectory)
 
 def validateAndReadCsvUrl(url):
     try:
@@ -106,7 +112,7 @@ def createSegmentTypeDictionary(segmentList):
     return segmentTypeDictionary
 
 
-def generateKml(segmentsByType, kmlFilename):
+def generateKml(segmentsByType, kmlDirectory):
 
     '''
     Set maximums by what Google MyMaps can display
@@ -119,42 +125,42 @@ def generateKml(segmentsByType, kmlFilename):
     maxKmlFeatures =            10000
     currKmlFeatures =           0
     maxKmlFeaturesPerLayer =    2000
-    numberOfFoldersForType =    0
-    currKmlFolders =            0
-    maxKmlFolders =             10
+    currKmlLayers =             0
+    maxKmlLayers =              10
 
     kmlFactory = kmldom.KmlFactory_GetFactory()
 
-    kmlDocument = kmlFactory.CreateDocument()
-    kmlDocument.set_name('Generated KML')
     doneProcessing = False
-    folder = None
+    layer = None
 
-    # for currFolderType in [ 'Freeway', 'Major Highway', 'Minor Highway' ]:
-    for currFolderType in [ 'Major Highway' ]:
+    for currLayerType in [ 'Freeway', 'Major Highway', 'Minor Highway' ]:
+    #for currLayerType in [ 'Major Highway' ]:
+
+        numberOfLayersForType = 0
+
         if doneProcessing:
-            print "Found we were done processing at folder loop, bailing"
+            print "Found we were done processing at layer type loop, bailing"
             break
 
-        if currFolderType not in segmentsByType:
+        if currLayerType not in segmentsByType:
             continue
 
-        for currFeature in segmentsByType[currFolderType]:
+        for currFeature in segmentsByType[currLayerType]:
             if doneProcessing:
                 print "Found we were done processing at the feature loop, bailing"
                 break
 
-            # Do we need a folder for this feature?
-            if folder == None:
+            # Do we need new layer for this feature?
+            if layer == None:
 
-                # Can we create a new folder?
-                if ( currKmlFolders < maxKmlFolders ):
-                    (folder, numberOfFoldersForType, currFeaturesInFolder, currKmlFolders) = \
-                        createNewFolder( kmlFactory, currFolderType, numberOfFoldersForType,
-                        currKmlFolders)
+                # Can we create a new layer?
+                if ( currKmlLayers < maxKmlLayers ):
+                    (layer, numberOfLayersForType, currFeaturesInLayer, currKmlLayers) = \
+                        createLayer( kmlFactory, currLayerType, numberOfLayersForType, 
+                        currKmlLayers)
                 else:
-                    print "Cannot create new folder, already at {0} which is max for KML".format(
-                        maxKmlFolders)
+                    print "Cannot create new layer, already at {0} which is max for KML".format(
+                        maxKmlLayers)
                     doneProcessing = True
                     break
 
@@ -166,21 +172,17 @@ def generateKml(segmentsByType, kmlFilename):
             point = kmlFactory.CreatePoint()
             point.set_coordinates(coordinates)
             placemark.set_geometry(point)
-            folder.add_feature(placemark)
+            layer.add_feature(placemark)
             placemark = None
 
-            # Increment total features as well as features in folder and see if we hit a limit
+            # Increment total features as well as features in layer and see if we hit a limit
             currKmlFeatures += 1
-            currFeaturesInFolder += 1
+            currFeaturesInLayer += 1
 
-            if currKmlFeatures == maxKmlFeatures or currFeaturesInFolder == maxKmlFeaturesPerLayer:
+            if currKmlFeatures == maxKmlFeatures or currFeaturesInLayer == maxKmlFeaturesPerLayer:
 
-                (kmlDocument, folder, currFeaturesInFolder) = closeFolderAndAddToDocument( folder,
-                    kmlDocument, currFeaturesInFolder)
-
-                # testing only, bail as soon as we close first folder
-                #doneProcessing = True
-                #break
+                (layer, currFeaturesInLayer) = closeLayer( layer, currKmlLayers, 
+                    currFeaturesInLayer, kmlFactory, kmlDirectory)
 
             # Did we hit total feature limit
             if ( currKmlFeatures == maxKmlFeatures):
@@ -188,36 +190,46 @@ def generateKml(segmentsByType, kmlFilename):
                 doneProcessing = True
                 break
                 
-        if ( currFeaturesInFolder > 0 and not doneProcessing ):
-            (kmlDocument, folder, currFeaturesInFolder) = closeFolderAndAddToDocument(folder, 
-                kmlDocument, currFeaturesInFolder)
+        if ( currFeaturesInLayer > 0 and not doneProcessing ):
+            (layer, currFeaturesInLayer) = closeLayer(layer, currKmlLayers,
+                currFeaturesInLayer, kmlFactory, kmlDirectory)
 
-    with open(kmlFilename, 'w') as kmlFile:
+
+def closeLayer(layer, currKmlLayers, currFeaturesInLayer, kmlFactory, kmlDirectory):
+
+    print "Closing layer {0} with {1} elements".format(
+         layer.get_name(), currFeaturesInLayer)
+
+    # Create KML document to store layer in
+    kmlDocument = kmlFactory.CreateDocument()
+    kmlDocument.add_feature(layer)
+
+    # Write document out
+    with open("{0}/{1:02d}_{2}.kml".format(
+        kmlDirectory, currKmlLayers, 
+        layer.get_name().replace(' ', '_')), 'w') as kmlFile:
+
         kmlFile.write(
             '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n' +
             kmldom.SerializePretty(kmlDocument) + '</kml>' )
 
-def closeFolderAndAddToDocument(folder, kmlDocument, currFeaturesInFolder):
+    layer = None
+    currFeaturesInLayer = 0
 
-    print "Closing folder {0} with {1} elements".format(
-         folder.get_name(), currFeaturesInFolder)
-    kmlDocument.add_feature(folder)
-    folder = None
-    currFeaturesInFolder = 0
+    return (layer, currFeaturesInLayer)
 
-    return (kmlDocument, folder, currFeaturesInFolder)
+def createLayer(kmlFactory, currLayerType, numberOfLayersForType, currKmlLayers):
+    layer = kmlFactory.CreateFolder()
+    numberOfLayersForType += 1
+    currFeaturesInLayer = 0
+    currKmlLayers += 1
 
-def createNewFolder(kmlFactory, currFolderType, numberOfFoldersForType, currKmlFolders):
-    folder = kmlFactory.CreateFolder()
-    numberOfFoldersForType += 1
-    currFeaturesInFolder = 0
-    currKmlFolders += 1
+    currLayerName = "{0} {1:02d}".format(currLayerType, numberOfLayersForType)
+    layer.set_name(currLayerName)
 
-    currFolderName = "{0} Folder #{1}".format(currFolderType, numberOfFoldersForType)
-    folder.set_name(currFolderName)
-    print "\nCreated folder " + currFolderName
+    print "\nCreated layer " + currLayerName
 
-    return (folder, numberOfFoldersForType, currFeaturesInFolder, currKmlFolders)
+    return (layer, numberOfLayersForType, currFeaturesInLayer, currKmlLayers)
     
         
 if __name__ == "__main__":
