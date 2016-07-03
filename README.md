@@ -57,17 +57,17 @@ Create a directory for the output files (e.g., <code>mkdir ~/tmp/speed-kml</code
 
 # Creating A Map
 
-* Log into [Google MyMaps](https://google.com/maps/d)
-* Create a new map
-* Click the blue *Import* link under "Untitled Layer"
-* Select the first KML (filename starts with "01")
-* Let the system chew on that
-* Once the points for the layer are loaded, disable the layer (click the checkbox)
-* Click *Add layer* button
-* Click the blue *Import* link under the new "Untitled Layer"
-* Select second KML file (file will start with "02")
-* Repeat adding-then-disabling layers until all KML files are uploaded
-* Re-enable the layers starting at the bottom layer and working your way up
+1. Log into [Google MyMaps](https://google.com/maps/d)
+1. Create a new map
+1. Click the blue *Import* link under "Untitled Layer"
+1. Select the first KML (filename starts with "01")
+1. Let the system chew on that
+1. Once the points for the layer are loaded, disable the layer (click the checkbox)
+1. Click *Add layer* button
+1. Click the blue *Import* link under the new "Untitled Layer"
+1. Select second KML file (file will start with "02")
+1. Repeat adding-then-disabling layers until all KML files are uploaded
+1. Re-enable the layers starting at the bottom layer and working your way up
 
 
 # Licensing
