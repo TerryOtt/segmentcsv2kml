@@ -1,5 +1,19 @@
 #!/usr/bin/env python
 
+# Copyright (c) 2006 Terry D. Ott. 
+#
+#   You may use, distribute, and modify this code under the terms
+#   of the MIT License.
+#
+#   You should have received a copy of the MIT License with this
+#   file. If not, please visit:
+#
+#   https://github.com/TerryOtt/segmentcsv2kml/blob/master/LICENSE    
+#
+#   or
+#
+#   https://opensource.org/licenses/MIT
+
 import sys
 import argparse
 import urllib2
