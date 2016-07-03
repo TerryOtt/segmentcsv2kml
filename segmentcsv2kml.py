@@ -119,92 +119,106 @@ def generateKml(segmentsByType, kmlFilename):
     maxKmlFeatures =            10000
     currKmlFeatures =           0
     maxKmlFeaturesPerLayer =    2000
-    numberOfFoldersPerType =    { 'Freeway': 0, 'Major Highway': 0, 'Minor Highway': 0 }
+    numberOfFoldersForType =    0
     currKmlFolders =            0
+    maxKmlFolders =             10
 
     kmlFactory = kmldom.KmlFactory_GetFactory()
 
     kmlDocument = kmlFactory.CreateDocument()
     kmlDocument.set_name('Generated KML')
     doneProcessing = False
+    folder = None
 
-    for currFolderType in [ 'Freeway', 'Major Highway', 'Minor Highway' ]:
+    # for currFolderType in [ 'Freeway', 'Major Highway', 'Minor Highway' ]:
+    for currFolderType in [ 'Major Highway' ]:
         if doneProcessing:
             print "Found we were done processing at folder loop, bailing"
             break
 
-        folder = kmlFactory.CreateFolder()
-        numberOfFoldersPerType[currFolderType] += 1
-        currKmlFolders += 1
+        if currFolderType not in segmentsByType:
+            continue
 
-        currFolderName = "{0} Folder #{1}".format(currFolderType, numberOfFoldersPerType[currFolderType])
-        folder.set_name(currFolderName)
-        print "Starting folder " + currFolderName
+        for currFeature in segmentsByType[currFolderType]:
+            if doneProcessing:
+                print "Found we were done processing at the feature loop, bailing"
+                break
 
-        currFeaturesInFolder = 0
+            # Do we need a folder for this feature?
+            if folder == None:
 
-        if currFolderType in segmentsByType:
-            for currFeature in segmentsByType[currFolderType]:
-                if doneProcessing:
-                    print "Found we were done processing at the feature loop, bailing"
-                    break
-                placemark = kmlFactory.CreatePlacemark()
-                #placemark.set_name(currFeature['PL'])
-                placemark.set_name(currFeature['ID'])
-                placemark.set_description(str(currFeature['PL']))
-                coordinates = kmlFactory.CreateCoordinates()
-                coordinates.add_latlng(currFeature['Latitude'], currFeature['Longitude'] )
-                point = kmlFactory.CreatePoint()
-                point.set_coordinates(coordinates)
-                placemark.set_geometry(point)
-                folder.add_feature(placemark)
-
-                # Increment total features
-                currKmlFeatures += 1
-
-                if currKmlFeatures == maxKmlFeatures:
-                    print "Maxed out at 10K features"
-                    kmlDocument.add_feature(folder)
-                    currFeaturesInFolder = 0
+                # Can we create a new folder?
+                if ( currKmlFolders < maxKmlFolders ):
+                    (folder, numberOfFoldersForType, currFeaturesInFolder, currKmlFolders) = \
+                        createNewFolder( kmlFactory, currFolderType, numberOfFoldersForType,
+                        currKmlFolders)
+                else:
+                    print "Cannot create new folder, already at {0} which is max for KML".format(
+                        maxKmlFolders)
                     doneProcessing = True
                     break
+
+            placemark = kmlFactory.CreatePlacemark()
+            placemark.set_name(currFeature['ID'])
+            placemark.set_description(str(currFeature['PL']))
+            coordinates = kmlFactory.CreateCoordinates()
+            coordinates.add_latlng(currFeature['Latitude'], currFeature['Longitude'] )
+            point = kmlFactory.CreatePoint()
+            point.set_coordinates(coordinates)
+            placemark.set_geometry(point)
+            folder.add_feature(placemark)
+            placemark = None
+
+            # Increment total features as well as features in folder and see if we hit a limit
+            currKmlFeatures += 1
+            currFeaturesInFolder += 1
+
+            if currKmlFeatures == maxKmlFeatures or currFeaturesInFolder == maxKmlFeaturesPerLayer:
+
+                (kmlDocument, folder, currFeaturesInFolder) = closeFolderAndAddToDocument( folder,
+                    kmlDocument, currFeaturesInFolder)
+
+                # testing only, bail as soon as we close first folder
+                #doneProcessing = True
+                #break
+
+            # Did we hit total feature limit
+            if ( currKmlFeatures == maxKmlFeatures):
+                print "Hit limit of {0} features per KML file".format(maxKmlFeatures)
+                doneProcessing = True
+                break
                 
-                # Increment features for this folder 
-                currFeaturesInFolder += 1
-
-                # Did we fill up the folder?
-                if ( currFeaturesInFolder == maxKmlFeaturesPerLayer ):
-
-                    print "Filled up folder " + currFolderName
-                    kmlDocument.add_feature(folder)
-                    currFeaturesInFolder = 0
-
-                    doneProcessing = True
-                    break
-
-                    # Do we have room for more folders?
-                    if currKmlFolders < 10:
-                        numberOfFoldersPerType[currFolderType] += 1
-
-                        folder = kmlFactory.CreateFolder()
-                        currFolderName = "{0} Folder #{1}".format(currFolderType, numberOfFoldersPerType[currFolderType])
-                        folder.set_name(currFolderName)
-
-                    else:
-                        print "Maxed out on folders, no room left"
-                        doneProcessing = True
-                        break
-
-            print "Either complete with or maxed out on " + currFolderType
-            if ( currFeaturesInFolder > 0 and not doneProcessing ):
-                kmlDocument.add_feature(folder)
-                currFeaturesInFolder = 0
+        if ( currFeaturesInFolder > 0 and not doneProcessing ):
+            (kmlDocument, folder, currFeaturesInFolder) = closeFolderAndAddToDocument(folder, 
+                kmlDocument, currFeaturesInFolder)
 
     with open(kmlFilename, 'w') as kmlFile:
         kmlFile.write(
             '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n' +
             kmldom.SerializePretty(kmlDocument) + '</kml>' )
 
+def closeFolderAndAddToDocument(folder, kmlDocument, currFeaturesInFolder):
+
+    print "Closing folder {0} with {1} elements".format(
+         folder.get_name(), currFeaturesInFolder)
+    kmlDocument.add_feature(folder)
+    folder = None
+    currFeaturesInFolder = 0
+
+    return (kmlDocument, folder, currFeaturesInFolder)
+
+def createNewFolder(kmlFactory, currFolderType, numberOfFoldersForType, currKmlFolders):
+    folder = kmlFactory.CreateFolder()
+    numberOfFoldersForType += 1
+    currFeaturesInFolder = 0
+    currKmlFolders += 1
+
+    currFolderName = "{0} Folder #{1}".format(currFolderType, numberOfFoldersForType)
+    folder.set_name(currFolderName)
+    print "\nCreated folder " + currFolderName
+
+    return (folder, numberOfFoldersForType, currFeaturesInFolder, currKmlFolders)
+    
         
 if __name__ == "__main__":
     main()
