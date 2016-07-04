@@ -16,21 +16,21 @@
 
 import sys
 import argparse
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import contextlib
-import StringIO
+import io
 import csv
 import re
-import kmldom
-import kmlengine
+import fastkml
 import os.path
+import shapely.geometry
 
 def main():
     (csvURL, kmlDirectory) = parseArgs()
 
     segmentList = validateAndReadCsvUrl(csvURL)
 
-    print "Read {0} data lines from {1}".format(len(segmentList), csvURL)
+    print("Read {0} data lines from {1}".format(len(segmentList), csvURL))
 
     # Create dictionary sorted by segment type
     segmentsByType = createSegmentTypeDictionary(segmentList)
@@ -53,31 +53,30 @@ def parseArgs():
 
     # Make sure target directory exists
     if os.path.isdir(args.kmlDirectory) is False:
-        print "\nERROR: Specified output directory {0} does not exist".format(args.kmlDirectory)
+        print("\nERROR: Specified output directory {0} does not exist".format(args.kmlDirectory))
         sys.exit()
 
     return (args.csvURL, args.kmlDirectory)
 
 def validateAndReadCsvUrl(url):
     try:
-        #return urllib2.urlopen(url).read() 
-        urlHandle = urllib2.urlopen(url)
+        urlHandle = urllib.request.urlopen(url)
 
-    except urllib2.HTTPError, e:
-        print("\nERROR: HTTP error code {0} returned when accessing {1}\n".format(
-            e.code, url))
+    except urllib.error.HTTPError as e:
+        print(("\nERROR: HTTP error code {0} returned when accessing {1}\n".format(
+            e.code, url)))
         sys.exit()
-    except urllib2.URLError, e:
-        print("\nERROR: unable to parse URL {0}, args: {1}\n".format(url, e.args))
+    except urllib.error.URLError as e:
+        print(("\nERROR: unable to parse URL {0}, args: {1}\n".format(url, e.args)))
         sys.exit()
-    except ValueError, e:
-        print("\nERROR: Unknown URL type: {0}\n".format(url))
+    except ValueError as e:
+        print(("\nERROR: Unknown URL type: {0}\n".format(url)))
         sys.exit()
     except:
-        print("\nERROR: unknown error opening {0}\n".format(url))
+        print(("\nERROR: unknown error opening {0}\n".format(url)))
         sys.exit()
 
-    csvReader = csv.reader(StringIO.StringIO(urlHandle.read()))
+    csvReader = csv.reader(io.TextIOWrapper(urlHandle))
 
     fileLines = []
 
@@ -97,8 +96,8 @@ def validateAndReadCsvUrl(url):
         # Add the latitude and longitude to the segment details
         (lon, lat) = getLonLatFromPermalink(segmentDetails['PL'])
 
-        segmentDetails['Longitude'] = float(lon)
-        segmentDetails['Latitude'] = float(lat)
+        segmentDetails['Longitude'] = lon
+        segmentDetails['Latitude'] = lat
 
         # Add to list of segments with segment ID as key
         segmentList[int(row[0])] = segmentDetails
@@ -109,7 +108,12 @@ def getLonLatFromPermalink(segmentPermalink):
     #print "Scanning PL: " + segmentPermalink
     matches = re.search( r'&lon=([-\d\.]+).*&lat=([-\d\.]+)', segmentPermalink)
 
-    return matches.groups()
+    (lon, lat) = matches.groups()
+
+    lon = float("{0:.5f}".format(float(lon)))
+    lat = float("{0:.5f}".format(float(lat)))
+
+    return (lon, lat)
 
 def createSegmentTypeDictionary(segmentList):
 
@@ -119,7 +123,7 @@ def createSegmentTypeDictionary(segmentList):
 
     for currSegmentId in segmentList:
         if segmentList[currSegmentId]['Road Type'] not in segmentTypeDictionary:
-            print "Found new segment type: " + segmentList[currSegmentId]['Road Type']
+            print("Found new segment type: " + segmentList[currSegmentId]['Road Type'])
             segmentTypeDictionary[segmentList[currSegmentId]['Road Type']] = [ segmentList[currSegmentId] ]
         else:
             segmentTypeDictionary[segmentList[currSegmentId]['Road Type']].append(
@@ -144,7 +148,8 @@ def generateKml(segmentsByType, kmlDirectory):
     currKmlLayers =             0
     maxKmlLayers =              10
 
-    kmlFactory = kmldom.KmlFactory_GetFactory()
+    # kmlFactory = kmldom.KmlFactory_GetFactory()
+    kmlFactory = None
 
     doneProcessing = False
     layer = None
@@ -155,7 +160,7 @@ def generateKml(segmentsByType, kmlDirectory):
         numberOfLayersForType = 0
 
         if doneProcessing:
-            print "Found we were done processing at layer type loop, bailing"
+            print("Found we were done processing at layer type loop, bailing")
             break
 
         if currLayerType not in segmentsByType:
@@ -163,7 +168,7 @@ def generateKml(segmentsByType, kmlDirectory):
 
         for currFeature in segmentsByType[currLayerType]:
             if doneProcessing:
-                print "Found we were done processing at the feature loop, bailing"
+                print("Found we were done processing at the feature loop, bailing")
                 break
 
             # Do we need new layer for this feature?
@@ -175,20 +180,16 @@ def generateKml(segmentsByType, kmlDirectory):
                         createLayer( kmlFactory, currLayerType, numberOfLayersForType, 
                         currKmlLayers)
                 else:
-                    print "Cannot create new layer, already at {0} which is max for KML".format(
-                        maxKmlLayers)
+                    print("Cannot create new layer, already at {0} which is max for KML".format(
+                        maxKmlLayers))
                     doneProcessing = True
                     break
 
-            placemark = kmlFactory.CreatePlacemark()
-            placemark.set_name(currFeature['ID'])
-            placemark.set_description(str(currFeature['PL']))
-            coordinates = kmlFactory.CreateCoordinates()
-            coordinates.add_latlng(currFeature['Latitude'], currFeature['Longitude'] )
-            point = kmlFactory.CreatePoint()
-            point.set_coordinates(coordinates)
-            placemark.set_geometry(point)
-            layer.add_feature(placemark)
+            kmlNamespace = '{http://www.opengis.net/kml/2.2}'
+            placemark = fastkml.kml.Placemark( kmlNamespace, '', currFeature['ID'], str(currFeature['PL']) )
+            placemark.geometry = shapely.geometry.Point( 
+                currFeature['Longitude'], currFeature['Latitude'] )
+            layer.append(placemark)
             placemark = None
 
             # Increment total features as well as features in layer and see if we hit a limit
@@ -202,7 +203,7 @@ def generateKml(segmentsByType, kmlDirectory):
 
             # Did we hit total feature limit
             if ( currKmlFeatures == maxKmlFeatures):
-                print "Hit limit of {0} features per KML file".format(maxKmlFeatures)
+                print("Hit limit of {0} features per KML file".format(maxKmlFeatures))
                 doneProcessing = True
                 break
                 
@@ -213,37 +214,38 @@ def generateKml(segmentsByType, kmlDirectory):
 
 def closeLayer(layer, currKmlLayers, currFeaturesInLayer, kmlFactory, kmlDirectory):
 
-    print "Closing layer {0} with {1} elements".format(
-         layer.get_name(), currFeaturesInLayer)
+    print("Closing layer PlaceHolderName with {0} elements".format(currFeaturesInLayer) )
 
     # Create KML document to store layer in
-    kmlDocument = kmlFactory.CreateDocument()
-    kmlDocument.add_feature(layer)
+    kmlRoot = fastkml.kml.KML()
+    ns = '{http://www.opengis.net/kml/2.2}'
+    kmlDocument = fastkml.kml.Document(ns, '', layer.name, '')
+    kmlDocument.append(layer)
+    kmlRoot.append(kmlDocument)
+
 
     # Write document out
-    with open("{0}/{1:02d}_{2}.kml".format(
-        kmlDirectory, currKmlLayers, 
-        layer.get_name().replace(' ', '_')), 'w') as kmlFile:
+    with open("{0}/{1:02d}_{2}.kml".format( 
+        kmlDirectory, currKmlLayers, layer.name.replace(' ', '_')), 'w') as kmlFile:
 
-        kmlFile.write(
-            '<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n' +
-            kmldom.SerializePretty(kmlDocument) + '</kml>' )
-
+        kmlFile.write( '<?xml version="1.0" encoding="UTF-8"?>\n' + 
+            kmlRoot.to_string(prettyprint=True) )
     layer = None
     currFeaturesInLayer = 0
 
     return (layer, currFeaturesInLayer)
 
 def createLayer(kmlFactory, currLayerType, numberOfLayersForType, currKmlLayers):
-    layer = kmlFactory.CreateFolder()
+
     numberOfLayersForType += 1
     currFeaturesInLayer = 0
     currKmlLayers += 1
 
     currLayerName = "{0} {1:02d}".format(currLayerType, numberOfLayersForType)
-    layer.set_name(currLayerName)
 
-    print "\nCreated layer " + currLayerName
+    layer = fastkml.kml.Folder( '{http://www.opengis.net/kml/2.2}', '', currLayerName, '' )
+    
+    print("\nCreated layer " + currLayerName)
 
     return (layer, numberOfLayersForType, currFeaturesInLayer, currKmlLayers)
     
