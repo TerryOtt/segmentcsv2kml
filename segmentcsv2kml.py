@@ -35,8 +35,10 @@ def main():
     # Create dictionary sorted by segment type
     segmentsByType = createSegmentTypeDictionary(segmentList)
 
-    print "Number of MH: {0}".format(len(segmentsByType['Major Highway']))
-    print "Number of mH: {0}".format(len(segmentsByType['Minor Highway']))
+    # print "Number of FW: {0}\nNumber of MH: {1}\nNumber of mH: {2}".format(
+    #    len(segmentsByType['Freeway']),
+    #    len(segmentsByType['Major Highway']),
+    #    len(segmentsByType['Minor Highway']) )
 
     generateKml(segmentsByType, kmlDirectory)
 
