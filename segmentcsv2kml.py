@@ -15,6 +15,12 @@
 #   https://opensource.org/licenses/MIT
 
 import sys
+
+# This script only runs with python version 3 or higher
+if sys.version_info.major < 3:
+    print( "\nERROR: this script must be run with a Python v3 interpreter, such as python3" )
+    sys.exit()
+
 import argparse
 import urllib.request, urllib.error, urllib.parse
 import contextlib
