@@ -4,7 +4,7 @@ import argparse
 import sys
 import os
 import json
-from pprint import pprint
+# from pprint import pprint
 import csv
 
 
@@ -98,8 +98,6 @@ def addPermalinksToSegments(segmentList):
     for i in range(len(segmentList)):
         segmentList[i]['permalink'] = generatePermalink(segmentList[i])
 
-        #pprint(segmentList[i])
-
 
 def generatePermalink(segmentDictionary):
     location = segmentDictionary['location']
@@ -143,9 +141,6 @@ def addSegmentsToCsv( currRoadType, segmentList, csvWriter ):
         ]
 
         csvWriter.writerow(rowData)
-
-        if currRoadType != 'Major Highway':
-            pprint( currSegment )
 
 
 if __name__ == '__main__':
