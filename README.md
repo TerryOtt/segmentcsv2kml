@@ -79,6 +79,6 @@ Create a directory for the output files (e.g., <code>mkdir ~/tmp/speed-kml</code
 
 # Licensing
 
-segmentcsv2kml is licensed under the MIT License. Refer to
+segmentcsv2kml is licensed under the [MIT License](https://en.wikipedia.org/wiki/MIT_License). Refer to
 [LICENSE](https://github.com/TerryOtt/segmentcsv2kml/blob/master/LICENSE) 
 for the full license text.
