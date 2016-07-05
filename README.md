@@ -34,7 +34,7 @@ These instructions are quite a bit more complicated than others. Due to multiple
 (can't install Docker or a new enough version of Python 3), we install a Ubuntu 16.04 
 virtual machine (VM) using Vagrant and then install segmentcsv2kml inside of that.
 
-    sudo install -y vagrant
+    sudo apt-get install vagrant
     vagrant init hashicorp/xenial64
     vagrant up
     vagrant ssh
@@ -44,7 +44,9 @@ virtual machine (VM) using Vagrant and then install segmentcsv2kml inside of tha
 
     yum update
     yum install epel-release
-    yum y install python34 python34-devel geos-python libxml2-devel libxslt-devel yum install gcc gcc-c++ make openssl-devel git zlib-devel
+    yum install python34 python34-devel geos-python libxml2-devel \
+        libxslt-devel yum install gcc gcc-c++ make openssl-devel \
+        git zlib-devel
     cd /root
     curl -O https://bootstrap.pypa.io/get-pip.py
     /usr/bin/python3.4 get-pip.py
