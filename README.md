@@ -4,20 +4,41 @@ This script converts comma-separated value (CSV) files of a specific type into K
 
 # Installation instructions
 
-The only two __supported__ environments to run segmentcsv2kml are Ubuntu Linux or using a Docker
-container built with instructions on this site.  
+The only two __supported__ environments to run segmentcsv2kml are Ubuntu Linux (14.04 or newer) or Docker.
 
 Instructions *may* be provided for other Linux distributions or operating systems, but they are not
 supported and very lightly tested, if at all.
 
-## Ubuntu 
+## Ubuntu 16.04 LTS (Xenial)
 
-    sudo apt-get install git python3 python3-pip python3-shapely python3-lxml python3-fastkml
+    sudo apt-get install git python3 python3-pip python3-shapely python3-lxml python3-fastkml 
     cd ~
     git clone https://github.com/TerryOtt/segmentcsv2kml
     cd segmentcsv2kml
     mkdir -p [output directory]
     python segmentcsv2kml [url] [output directory]
+
+## Ubuntu 14.04 LTS (Trusty)
+
+    sudo apt-get install git python3 python3-pip python3-shapely python3-lxml 
+    sudo pip3 install fastkml
+    cd ~
+    git clone https://github.com/TerryOtt/segmentcsv2kml
+    cd segmentcsv2kml
+    mkdir -p [output directory]
+    python segmentcsv2kml [url] [output directory]
+
+## Ubuntu 12.04 LTS (Precise)
+
+These instructions are quite a bit more complicated than others. Due to multiple issues
+(can't install Docker or a new enough version of Python 3), we install a Ubuntu 16.04 
+virtual machine (VM) using Vagrant and then install segmentcsv2kml inside of that.
+
+    sudo install -y vagrant
+    vagrant init hashicorp/xenial64
+    vagrant up
+    vagrant ssh
+    [At this point, pick up at the Ubuntu 16.04 instructions above]
 
 ## Docker
 
