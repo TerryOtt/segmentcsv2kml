@@ -42,6 +42,11 @@ virtual machine (VM) using Vagrant and then install segmentcsv2kml inside of tha
 
 ## CentOS 7.x
 
+*NOTE*: the <code>pip3.4</code> command takes a long time -- as in minutes.
+It'll look like it hung after it prints out a line that says:
+<code>Running setup.py bdist_wheel for lxml: started</code>.  It really 
+will finish, just need a good deal of patience. :)
+
     yum update
     yum install epel-release
     yum install python34 python34-devel geos-python libxml2-devel \
