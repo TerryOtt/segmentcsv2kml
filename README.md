@@ -38,7 +38,21 @@ virtual machine (VM) using Vagrant and then install segmentcsv2kml inside of tha
     vagrant init hashicorp/xenial64
     vagrant up
     vagrant ssh
-    [At this point, pick up at the Ubuntu 16.04 instructions above]
+    [Continue with Ubuntu 16.04 instructions above]
+
+## CentOS 7.x
+
+    yum update
+    yum install epel-release
+    yum y install python34 python34-devel geos-python libxml2-devel libxslt-devel yum install gcc gcc-c++ make openssl-devel git zlib-devel
+    cd /root
+    curl -O https://bootstrap.pypa.io/get-pip.py
+    /usr/bin/python3.4 get-pip.py
+    pip3.4 install shapely lxml fastkml
+    git clone https://github.com/TerryOtt/segmentcsv2kml
+    cd segmentcsv2kml
+    git checkout python3_investigation
+    
 
 ## Docker
 
