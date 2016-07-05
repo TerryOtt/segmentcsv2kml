@@ -12,16 +12,12 @@ supported and very lightly tested, if at all.
 
 ## Ubuntu 
 
-Recent Ubuntu releases (12.04 and later) were kind enough to put releases of Google's libkml into
-the apt repositories, so we can easily leverage them.
-
-    sudo apt-get install git python python-kml
+    sudo apt-get install git python3 python3-pip python3-shapely python3-lxml python3-fastkml
     cd ~
     git clone https://github.com/TerryOtt/segmentcsv2kml
     cd segmentcsv2kml
-    mkdir -p ~/tmp/kmloutput
-    python segmentcsv2kml [url] ~/tmp/kmloutput
-    ls -laF ~/tmp/kmloutput
+    mkdir -p [output directory]
+    python segmentcsv2kml [url] [output directory]
 
 ## Docker
 
@@ -37,24 +33,13 @@ Once Docker is installed, change to the <code>install/</code> directory, and run
 The build steps already downloaded and installed the program, so once you're at the 
 bash shell inside the running container, just run the script:
 
-    mkdir -p ~/tmp/kmloutput
-    python segmentcsv2kml [url] ~/tmp/kmloutput
-    ls -laF ~/tmp/kmloutput
+    mkdir -p [output directory]
+    python segmentcsv2kml [url] [output directory]
 
 ## CentOS
 
-The CentOS/RHEL yum repositories do not include libkml, so we have to compile it.
+## Windows 
 
-    sudo yum -y install gcc-c++ zlib-devel libtool expat-devel git libcurl-devel python-devel swig make
-    cd ~
-    git checkout https://github.com/google/libkml
-    cd libkml
-    mkdir build
-    ./autogen.sh
-    ./configure --prefix=/usr/local --disable-java --enable-python
-    make 
-    make check
-    sudo make install
 
 # Running
 
