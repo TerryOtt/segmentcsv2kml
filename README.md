@@ -69,12 +69,19 @@ Create a directory for the output files (e.g., <code>mkdir ~/tmp/speed-kml</code
 1. Click the blue *Import* link under "Untitled Layer"
 1. Select the first KML (filename starts with "01")
 1. Let the system chew on that
-1. Once the points for the layer are loaded, disable the layer (click the checkbox)
-1. Click *Add layer* button
-1. Click the blue *Import* link under the new "Untitled Layer"
-1. Select second KML file (file will start with "02")
-1. Repeat steps 7-9 until all KML files are uploaded (in order by filename)
-1. Re-enable all layers starting at the bottom layer and working your way up
+1. Once the points for the layer are loaded, click the blue "Individual styles" link for the new layer
+1. Click on "Group playce by: Individual styles" and select "Uniform style"
+1. Click the X for the popup window for layer style info
+1. Hover mouse to right of "All items" and click the paintcan icon
+1. Select an appropriate color for your pins (e.g., light blue for Major Highway, light green for Minor Highway)
+1. Click the X for the popup window for color/icons
+1. Repeat for all KML files
+
+Note there is an order pins are drawn. The pins in the first layer listed are drawn first, then 
+pins from second layer, etc.
+
+This may mean you want to have your highest Functional Classification layers at the BOTTOM of the list,
+so those pins are on top.
 
 
 # Licensing
