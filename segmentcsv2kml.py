@@ -160,7 +160,7 @@ def generateKml(segmentsByType, kmlDirectory):
     doneProcessing = False
     layer = None
 
-    for currLayerType in [ 'Freeway', 'Major Highway', 'Minor Highway' ]:
+    for currLayerType in [ 'Freeway', 'Major Highway', 'Minor Highway', 'Primary Street' ]:
     #for currLayerType in [ 'Major Highway' ]:
 
         numberOfLayersForType = 0
